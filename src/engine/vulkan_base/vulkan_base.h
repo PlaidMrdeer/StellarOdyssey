@@ -10,16 +10,44 @@
 class vulkan_base
 {
 public:
-    void init();
+    static void init();
 private:
-    VkSurfaceKHR surface = nullptr;
+    struct Init
+    {
+        vkb::Instance instance;
+        vkb::InstanceDispatchTable inst_disp;
+        VkSurfaceKHR surface{};
+        vkb::Device device;
+        vkb::DispatchTable disp;
+        vkb::Swapchain swapchain;
+    };
 
-    vkb::InstanceBuilder instance_builder;
-    vkb::Instance vkb_instance;
+    struct RenderData
+    {
+        VkQueue graphics_queue;
+        VkQueue present_queue;
 
-    void instance();
-    void pickPhysicalDevice() const;
-    void cleanup() const;
+        std::vector<VkImage> swapchain_images;
+        std::vector<VkImageView> swapchain_image_views;
+        std::vector<VkFramebuffer> framebuffers;
+
+        VkRenderPass render_pass;
+        VkPipelineLayout pipeline_layout;
+        VkPipeline graphics_pipeline;
+
+        VkCommandPool command_pool;
+        std::vector<VkCommandBuffer> command_buffers;
+
+        std::vector<VkSemaphore> available_semaphores;
+        std::vector<VkSemaphore> finished_semaphore;
+        std::vector<VkFence> in_flight_fences;
+        std::vector<VkFence> image_in_flight;
+        size_t current_frame = 0;
+    };
+
+    static int device_initialization(Init& init);
+    static int create_swapchain(Init& init);
+    static int get_queues(Init& init, RenderData& data);
 };
 
 #endif

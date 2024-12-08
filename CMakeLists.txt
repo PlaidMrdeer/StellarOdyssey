@@ -21,6 +21,7 @@ find_package(glfw3 CONFIG REQUIRED)
 find_package(glm CONFIG REQUIRED)
 find_package(nlohmann_json REQUIRED)
 find_package(yaml-cpp REQUIRED)
+find_package(Vulkan REQUIRED)
 find_package(vk-bootstrap CONFIG REQUIRED)
 
 target_link_libraries(StellarOdyssey PRIVATE
@@ -28,5 +29,6 @@ target_link_libraries(StellarOdyssey PRIVATE
         glm::glm-header-only
         nlohmann_json::nlohmann_json
         yaml-cpp::yaml-cpp
+        Vulkan::Vulkan
         vk-bootstrap::vk-bootstrap vk-bootstrap::vk-bootstrap-compiler-warnings
 )
