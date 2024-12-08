@@ -10,38 +10,51 @@
 
 void vulkan_base::init()
 {
-    instance();
-    pickPhysicalDevice();
-    cleanup();
-}
+    Init init;
+    RenderData render_data;
 
-void vulkan_base::instance()
-{
-    auto instance_builder_return = instance_builder
-            .set_app_name ("Stellar Odyssey")
-            .request_validation_layers()
-            .use_default_debug_messenger()
-            .require_api_version(1,3,0)
-            .build();
-    vkb_instance = instance_builder_return.value();
-    glfwCreateWindowSurface (vkb_instance.instance, window::get_window(), nullptr, &surface);
-}
-
-void vulkan_base::pickPhysicalDevice() const
-{
-    vkb::PhysicalDeviceSelector phys_device_selector(vkb_instance);
-    auto phys_ret = phys_device_selector.set_surface (surface)
-                        .set_minimum_version (1, 3)
-                        .require_dedicated_transfer_queue()
-                        .select ();
+    device_initialization(init);
+    create_swapchain(init);
+    get_queues(init, render_data);
 }
 
 
+int vulkan_base::device_initialization(Init& init) {
+    vkb::InstanceBuilder instance_builder;
+    auto instance_ret = instance_builder.use_default_debug_messenger().request_validation_layers().build();
+    init.instance = instance_ret.value();
 
-void vulkan_base::cleanup() const
-{
-    vkDestroySurfaceKHR(vkb_instance, surface, nullptr);
-    destroy_instance(vkb_instance);
+    init.inst_disp = init.instance.make_table();
+
+    glfwCreateWindowSurface (init.instance, window::get_window(), nullptr, &init.surface);
+
+    vkb::PhysicalDeviceSelector phys_device_selector(init.instance);
+    auto phys_device_ret = phys_device_selector.set_surface(init.surface).select();
+    const vkb::PhysicalDevice& physical_device = phys_device_ret.value();
+
+    vkb::DeviceBuilder device_builder{ physical_device };
+    auto device_ret = device_builder.build();
+    init.device = device_ret.value();
+
+    init.disp = init.device.make_table();
+
+    return 0;
 }
 
+int vulkan_base::create_swapchain(Init& init) {
 
+    vkb::SwapchainBuilder swapchain_builder{ init.device };
+    auto swap_ret = swapchain_builder.set_old_swapchain(init.swapchain).build();
+    destroy_swapchain(init.swapchain);
+    init.swapchain = swap_ret.value();
+    return 0;
+}
+
+int vulkan_base::get_queues(Init& init, RenderData& data) {
+    auto gq = init.device.get_queue(vkb::QueueType::graphics);
+    data.graphics_queue = gq.value();
+
+    auto pq = init.device.get_queue(vkb::QueueType::present);
+    data.present_queue = pq.value();
+    return 0;
+}

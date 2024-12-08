@@ -8,6 +8,5 @@ int main()
     window window_{};
     window_.run();
 
-    vulkan_base vulkan_base_{};
-    vulkan_base_.init();
+    vulkan_base::init();
 }
