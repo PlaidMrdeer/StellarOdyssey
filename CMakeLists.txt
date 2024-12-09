@@ -59,6 +59,13 @@ add_custom_command(
     $<TARGET_FILE_DIR:${PROJECT_NAME}>/logs
 )
 
+# 复制着色器文件
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+    ${CMAKE_SOURCE_DIR}/shaders $<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders
+)
+
 # 设置FetchContent选项
 set(FETCHCONTENT_QUIET OFF)
 include(FetchContent)

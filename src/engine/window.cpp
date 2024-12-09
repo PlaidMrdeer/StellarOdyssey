@@ -7,6 +7,8 @@
 #include <GLFW/glfw3.h>
 #include "../tools/config.h"
 #include "../tools/logger.h"
+#include "renderer/shader.h"
+#include "renderer/renderer.h"
 
 using namespace stellar;
 
@@ -44,17 +46,46 @@ void Window::init() {
     }
 
     glfwMakeContextCurrent(window_);
+    
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        STELLAR_CORE_CRITICAL("GLAD初始化失败");
+        throw std::runtime_error("Failed to initialize GLAD");
+    }
+    
+    init_renderer();
+}
+
+void Window::init_renderer() {
+    renderer_ = std::make_unique<Renderer>();
+    renderer_->init();
+    
+    shader_ = std::make_shared<Shader>("shaders/basic.vert", "shaders/basic.frag");
+    renderer_->set_shader(shader_);
 }
 
 void Window::update() {
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // 在每一帧都绘制三角形
+    std::vector<Vertex> vertices = {
+        {{-0.5f, -0.5f, 0.0f}},
+        {{ 0.5f, -0.5f, 0.0f}},
+        {{ 0.0f,  0.5f, 0.0f}}
+    };
+    
+    renderer_->begin_batch();
+    renderer_->draw_vertices(vertices);
+    renderer_->end_batch();
+
     glfwSwapBuffers(window_);
     glfwPollEvents();
 }
 
 void Window::cleanup() {
+    renderer_.reset();
+    shader_.reset();
+    
     if (window_) {
         glfwDestroyWindow(window_);
         window_ = nullptr;
