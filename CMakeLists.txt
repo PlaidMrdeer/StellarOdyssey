@@ -24,25 +24,20 @@ set(INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
 
 # 收集源文件
 file(GLOB_RECURSE CORE_SOURCE 
-    "${SOURCE_DIR}/*.cpp"
-    "${SOURCE_DIR}/*.h"
-    "${INCLUDE_DIR}/*.h"
+    "${SOURCE_DIR}/core/*.cpp"
+    "${SOURCE_DIR}/engine/*.cpp"
+    "${SOURCE_DIR}/tools/*.cpp"
+    "${SOURCE_DIR}/main.cpp"
+)
+
+file(GLOB_RECURSE CORE_HEADERS
+    "${SOURCE_DIR}/core/*.h"
+    "${SOURCE_DIR}/engine/*.h"
+    "${SOURCE_DIR}/tools/*.h"
 )
 
 # 创建可执行文件
-add_executable(${PROJECT_NAME} ${CORE_SOURCE})
-
-# 添加编译选项
-if(MSVC)
-    target_compile_options(${PROJECT_NAME} PRIVATE /W4)
-else()
-    target_compile_options(${PROJECT_NAME} PRIVATE 
-        -Wall 
-        -Wextra 
-        -Wpedantic 
-        -Werror
-    )
-endif()
+add_executable(${PROJECT_NAME} ${CORE_SOURCE} ${CORE_HEADERS})
 
 # 添加包含目录
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -55,6 +50,13 @@ add_custom_command(
     TARGET ${PROJECT_NAME} POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
     ${CONFIG_DIR} $<TARGET_FILE_DIR:${PROJECT_NAME}>/config
+)
+
+# 创建日志目录
+add_custom_command(
+    TARGET ${PROJECT_NAME} POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory
+    $<TARGET_FILE_DIR:${PROJECT_NAME}>/logs
 )
 
 # 设置FetchContent选项
@@ -113,6 +115,14 @@ FetchContent_MakeAvailable(glad)
 # OpenGL
 find_package(OpenGL REQUIRED)
 
+# spdlog
+FetchContent_Declare(
+    spdlog
+    GIT_REPOSITORY https://github.com/gabime/spdlog.git
+    GIT_TAG v1.10.0
+)
+FetchContent_MakeAvailable(spdlog)
+
 # 链接所所有依赖
 target_link_libraries(${PROJECT_NAME} PRIVATE
     glfw
@@ -121,6 +131,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     yaml-cpp
     OpenGL::GL
     glad
+    spdlog::spdlog
 )
 
 # 安装配置
@@ -139,4 +150,11 @@ option(BUILD_TESTING "Build the testing tree." OFF)
 if(BUILD_TESTING)
     enable_testing()
     add_subdirectory(tests)
+endif()
+
+add_definitions(-DSTELLAR_BUILD_DLL)
+
+# 如果是Windows平台，添加以下定义
+if(WIN32)
+    add_definitions(-DSTELLAR_PLATFORM_WINDOWS)
 endif()

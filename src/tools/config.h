@@ -5,14 +5,30 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+#include "../engine/core.h"
 #include <yaml-cpp/yaml.h>
+#include <string>
 
-class config
-{
+namespace stellar {
+namespace utils {
+
+class STELLAR_API Config {
 public:
-    static YAML::Node get_config();
+    static Config& get_instance();
+    
+    static void init(const std::string& config_path = "config/config.yaml");
+    const YAML::Node& get_config() const { return config_; }
+
 private:
-    static YAML::Node config_;
+    Config() = default;
+    ~Config() = default;
+    Config(const Config&) = delete;
+    Config& operator=(const Config&) = delete;
+
+    YAML::Node config_;
 };
 
-#endif
+} // namespace utils
+} // namespace stellar
+
+#endif // CONFIG_H
